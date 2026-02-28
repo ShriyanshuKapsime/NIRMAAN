@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details — NIRMAAN Citizen Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b
+        }
+
+        .tab-btn.active {
+            color: #0f172a;
+            border-color: #1e3a5f
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+            transition: all .2s
+        }
+
+        .tab-btn:hover {
+            color: #334155
+        }
+
+        @keyframes mIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(.97)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1)
+            }
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(40px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(40px)
+            }
+        }
+
+        .modal-content {
+            animation: mIn .3s ease
+        }
+
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s ease
+        }
+
+        .accordion-body.open {
+            max-height: 600px
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen">
+
+    <!-- NAVBAR -->
+    <nav class="w-full bg-white border-b border-slate-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="font-extrabold text-lg text-slate-900 tracking-tight">NIRMAAN <span
+                    class="text-slate-300 font-normal">|</span> <span
+                    class="text-emerald-600 text-sm font-semibold">Citizen Portal</span></a>
+            <a href="citizen.html"
+                class="text-sm text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- PROJECT HEADER BANNER -->
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row mb-8"
+            id="projectBanner">
+            <div class="md:w-72 h-52 md:h-auto bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden"
+                id="bannerPhoto">
+                <p class="text-sm text-slate-400">Loading...</p>
+            </div>
+            <div class="flex-1 p-6 md:p-8">
+                <h1 class="font-extrabold text-xl md:text-2xl text-slate-900 mb-1" id="projectName">Loading...</h1>
+                <p class="text-sm text-slate-400 flex items-center gap-1 mb-4">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    <span id="locationText"></span>
+                </p>
+                <!-- Progress -->
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-900 rounded-full transition-all" id="progressBar" style="width:0%">
+                        </div>
+                    </div>
+                    <span class="text-sm font-bold text-slate-700" id="progressPct">0%</span>
+                </div>
+                <!-- Meta Row -->
+                <div class="flex flex-wrap gap-4 text-sm text-slate-500">
+                    <span>Contractor: <strong class="text-slate-700" id="contractorName">—</strong></span>
+                    <span>Budget: <strong class="text-slate-700" id="budgetText">—</strong></span>
+                    <span>Status: <strong id="statusBadge">—</strong></span>
+                    <span>Rating: <strong class="text-orange-500" id="contractorRating">—</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTION BAR -->
+        <div class="mb-8">
+            <button onclick="openReportModal()"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+                </svg>
+                Report Ground Reality
+            </button>
+        </div>
+
+        <!-- 3 TABS -->
+        <div class="flex items-center gap-6 border-b border-slate-200 mb-6">
+            <button onclick="switchTab('community')"
+                class="tab-btn active pb-3 text-sm font-semibold text-slate-900 border-blue-900"
+                id="tabCommunity">Community Feed</button>
+            <button onclick="switchTab('verification')" class="tab-btn pb-3 text-sm font-medium text-slate-400"
+                id="tabVerification">Verification Feed</button>
+        </div>
+
+        <!-- COMMUNITY FEED TAB -->
+        <div id="panelCommunity">
+            <div class="flex flex-col gap-4" id="communityList">
+                <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+                    <p class="text-sm text-slate-400">Loading citizen reports...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VERIFICATION FEED TAB -->
+        <div id="panelVerification" class="hidden">
+            <div class="flex flex-col gap-4" id="verificationList">
+                <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+                    <p class="text-sm text-slate-400">Loading contractor claims...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <!-- ====================== -->
+    <!-- REPORT GROUND REALITY CAMERA MODAL -->
+    <!-- ====================== -->
+    <div id="reportModal" class="hidden fixed inset-0 z-50 bg-black/50 items-center justify-center p-4"
+        style="backdrop-filter:blur(4px)">
+        <div class="modal-content bg-white rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto shadow-xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 pt-6 pb-3 border-b border-slate-100">
+                <h2 class="font-bold text-lg text-slate-900">📸 Report Ground Reality</h2>
+                <button onclick="closeReportModal()"
+                    class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- Camera Viewfinder -->
+                <div class="relative bg-black rounded-xl overflow-hidden aspect-video">
+                    <video id="citizenCamFeed" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    <canvas id="citizenCamCanvas" class="w-full h-full object-cover hidden"></canvas>
+                    <div id="capturedOverlay"
+                        class="hidden absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold bg-emerald-600 px-4 py-2 rounded-full">✓ Photo
+                            Captured</span>
+                    </div>
+                </div>
+                <!-- Snap / Retake -->
+                <div class="flex items-center gap-3">
+                    <button onclick="snapPhoto()" id="btnSnap"
+                        class="flex-1 py-2.5 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors text-sm">
+                        📷 Capture Photo
+                    </button>
+                    <button onclick="retakePhoto()" id="btnRetake"
+                        class="hidden flex-1 py-2.5 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors text-sm">
+                        ↺ Retake
+                    </button>
+                </div>
+
+                <!-- GPS -->
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">GPS
+                        Location</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="gpsLocation" readonly placeholder="Detecting..."
+                            class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700" />
+                        <button onclick="detectGPS()"
+                            class="px-3 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors">Detect</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1" id="gpsMapLink"></p>
+                </div>
+
+                <!-- Link to Request -->
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Link to
+                        Contractor Request</label>
+                    <select id="modalRequestId"
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-400 transition-all">
+                        <option value="">Loading requests...</option>
+                    </select>
+                </div>
+
+                <!-- Star Rating -->
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Rating
+                        (1-5)</label>
+                    <div class="flex gap-2" id="modalRatingStars">
+                        <button type="button" onclick="setRating(1)"
+                            class="rating-star w-10 h-10 rounded-lg border border-slate-200 text-lg hover:bg-orange-50 transition-all">★</button>
+                        <button type="button" onclick="setRating(2)"
+                            class="rating-star w-10 h-10 rounded-lg border border-slate-200 text-lg hover:bg-orange-50 transition-all">★</button>
+                        <button type="button" onclick="setRating(3)"
+                            class="rating-star w-10 h-10 rounded-lg border border-slate-200 text-lg hover:bg-orange-50 transition-all">★</button>
+                        <button type="button" onclick="setRating(4)"
+                            class="rating-star w-10 h-10 rounded-lg border border-slate-200 text-lg hover:bg-orange-50 transition-all">★</button>
+                        <button type="button" onclick="setRating(5)"
+                            class="rating-star w-10 h-10 rounded-lg border border-slate-200 text-lg hover:bg-orange-50 transition-all">★</button>
+                    </div>
+                </div>
+
+                <!-- Comment -->
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Your
+                        Observation</label>
+                    <textarea id="modalComment" rows="3" required placeholder="Describe the actual ground condition..."
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-all resize-none"></textarea>
+                </div>
+
+                <!-- Submit -->
+                <button onclick="submitReport()" id="submitReportBtn"
+                    class="w-full py-3 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-lg transition-colors text-sm">
+                    Submit Ground Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ====================== -->
+    <!-- COUNTER-REPORT CAMERA MODAL -->
+    <!-- ====================== -->
+    <div id="counterModal" class="hidden fixed inset-0 z-50 bg-black/50 items-center justify-center p-4"
+        style="backdrop-filter:blur(4px)">
+        <div class="modal-content bg-white rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto shadow-xl">
+            <div class="flex items-center justify-between px-6 pt-6 pb-3 border-b border-slate-100">
+                <h2 class="font-bold text-lg text-red-700">🚩 Counter-Report this Claim</h2>
+                <button onclick="closeCounterModal()"
+                    class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <p class="text-sm text-slate-500">You are disputing claim <strong class="text-slate-800"
+                        id="counterReqLabel">—</strong>. Take a live photo to prove the real condition.</p>
+                <input type="hidden" id="counterRequestId" value="" />
+
+                <div class="relative bg-black rounded-xl overflow-hidden aspect-video">
+                    <video id="counterCamFeed" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    <canvas id="counterCamCanvas" class="w-full h-full object-cover hidden"></canvas>
+                    <div id="counterCapturedOverlay"
+                        class="hidden absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold bg-emerald-600 px-4 py-2 rounded-full">✓ Photo
+                            Captured</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="counterSnapPhoto()" id="counterBtnSnap"
+                        class="flex-1 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors text-sm">
+                        📷 Capture Proof
+                    </button>
+                    <button onclick="counterRetakePhoto()" id="counterBtnRetake"
+                        class="hidden flex-1 py-2.5 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors text-sm">
+                        ↺ Retake
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">GPS
+                        Location</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="counterGps" readonly placeholder="Detecting..."
+                            class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700" />
+                        <button onclick="detectCounterGPS()"
+                            class="px-3 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors">Detect</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1" id="counterGpsMapLink"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Why is
+                        this claim fake?</label>
+                    <textarea id="counterComment" rows="3" required
+                        placeholder="Describe what's wrong with the contractor's claim..."
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-400 transition-all resize-none"></textarea>
+                </div>
+
+                <button onclick="submitCounterReport()" id="submitCounterBtn"
+                    class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm">
+                    🚩 Submit Counter-Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/citizen-details.js"></script>
+</body>
+
+</html>

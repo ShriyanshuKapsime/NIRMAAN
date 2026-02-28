@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Portal — NIRMAAN</title>
+    <meta name="description"
+        content="NIRMAAN Citizen Portal — Track infrastructure projects, verify progress, and report ground conditions in your area.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        .filter-btn.active {
+            background: #1e3a5f;
+            color: #fff;
+            border-color: #1e3a5f
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .card-animate {
+            animation: fadeUp 0.4s ease forwards;
+            opacity: 0
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2)
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0)
+            }
+        }
+
+        .location-pulse {
+            animation: pulseGlow 2s ease infinite
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen">
+
+    <!-- NAVBAR -->
+    <nav class="w-full bg-white border-b border-slate-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="font-extrabold text-lg text-slate-900 tracking-tight">NIRMAAN <span
+                    class="text-slate-300 font-normal">|</span> <span
+                    class="text-emerald-600 text-sm font-semibold">Citizen Portal</span></a>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-sm text-slate-500 hover:text-slate-900 transition-colors">Home</a>
+                <div class="flex items-center gap-2 pl-4 border-l border-slate-200">
+                    <div
+                        class="location-pulse w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                    </div>
+                    <div class="hidden sm:block">
+                        <p class="text-xs text-slate-400">Your Location</p>
+                        <p class="text-xs font-semibold text-slate-700" id="userLocation">Detecting...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- HERO HEADER -->
+        <div class="mb-8">
+            <h1 class="font-extrabold text-2xl md:text-3xl text-slate-900 tracking-tight">Infrastructure Projects Near
+                You</h1>
+            <p class="text-sm text-slate-400 mt-1 max-w-xl">Track ongoing and completed public works. Verify contractor
+                claims and report ground conditions to keep your community informed.</p>
+        </div>
+
+        <!-- SEARCH & FILTER BAR -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row items-center gap-4 mb-8">
+            <!-- Search -->
+            <div class="flex-1 w-full relative">
+                <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search by Village, Town, or Project Name..."
+                    class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition-all" />
+            </div>
+            <!-- Status Filters -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <button onclick="setFilter('all')" id="filterAll"
+                    class="filter-btn active px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold transition-all">All</button>
+                <button onclick="setFilter('Ongoing')" id="filterOngoing"
+                    class="filter-btn px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-500 transition-all hover:bg-slate-50">Ongoing</button>
+                <button onclick="setFilter('Completed')" id="filterCompleted"
+                    class="filter-btn px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-500 transition-all hover:bg-slate-50">Completed</button>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-xl border border-slate-200">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Projects</p>
+                <p class="text-2xl font-bold text-slate-900" id="statTotal">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl border border-slate-200">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Active / Ongoing</p>
+                <p class="text-2xl font-bold text-orange-500" id="statOngoing">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl border border-emerald-200 bg-emerald-50/30">
+                <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.065 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+                    </svg>
+                    My Credibility Score
+                </p>
+                <p class="text-2xl font-bold text-emerald-700" id="statCredibility">5.0</p>
+            </div>
+        </div>
+
+        <!-- RESULTS COUNT + SORT -->
+        <div class="flex items-center justify-between mb-4">
+            <p class="text-sm text-slate-500"><span class="font-semibold text-slate-700" id="resultCount">0</span>
+                projects found</p>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">Sort by</span>
+                <select id="sortSelect" onchange="renderCards()"
+                    class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 focus:outline-none cursor-pointer">
+                    <option value="newest">Newest First</option>
+                    <option value="progress">Most Progress</option>
+                    <option value="rating">Highest Rated</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PROJECT CARDS -->
+        <div class="flex flex-col gap-5" id="projectList">
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+                <p class="text-sm text-slate-400">Loading infrastructure projects...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-100 mt-16">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-xs text-slate-400">&copy; 2026 NIRMAAN — Infrastructure Transparency Platform</p>
+            <a href="index.html" class="text-xs text-slate-400 hover:text-slate-700 transition-colors">Home</a>
+        </div>
+    </footer>
+
+    <script src="js/citizen.js"></script>
+</body>
+
+</html>

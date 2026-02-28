@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — NIRMAAN</title>
+    <meta name="description"
+        content="NIRMAAN Admin Dashboard — Manage projects, assign work, and oversee infrastructure development progress.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Tab underline */
+        .tab-underline {
+            position: relative;
+        }
+
+        .tab-underline.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #f97316;
+            border-radius: 1px;
+        }
+
+        /* Progress bar animation */
+        .progress-fill {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-content {
+            animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Drag-drop zone */
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: #f97316;
+            background: #fff7ed;
+        }
+
+        /* FAB hover */
+        .fab {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fab:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 32px rgba(249, 115, 22, 0.35);
+        }
+
+        /* Card hover */
+        .project-card {
+            transition: box-shadow 0.3s ease;
+        }
+
+        .project-card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen">
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="w-full bg-white border-b border-slate-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <!-- Left: Logo -->
+            <a href="index.html" class="flex items-center gap-2 group">
+                <span class="font-extrabold text-lg text-slate-900 tracking-tight">NIRMAAN</span>
+                <span class="text-slate-300 text-sm font-normal">|</span>
+                <span class="text-slate-500 text-sm font-medium">Admin</span>
+            </a>
+
+            <!-- Right: Nav items + Profile -->
+            <div class="flex items-center gap-6">
+                <a href="index.html"
+                    class="text-sm text-slate-500 hover:text-slate-900 transition-colors hidden md:block">Home</a>
+                <a href="citizen.html"
+                    class="text-sm text-slate-500 hover:text-slate-900 transition-colors hidden md:block">View Public
+                    Dashboard</a>
+
+                <!-- Notification bell -->
+                <button class="relative p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    </svg>
+                    <span class="absolute top-0.5 right-0.5 w-2 h-2 bg-orange-500 rounded-full"></span>
+                </button>
+
+                <!-- Admin avatar -->
+                <div class="flex items-center gap-2.5 pl-4 border-l border-slate-100">
+                    <div class="w-8 h-8 rounded-full bg-blue-900 flex items-center justify-center">
+                        <span class="text-white text-xs font-semibold">A</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <p class="text-sm font-semibold text-slate-900 leading-tight">Admin</p>
+                        <p class="text-xs text-slate-400 leading-tight">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="font-extrabold text-2xl md:text-3xl text-slate-900 tracking-tight">Admin Dashboard</h1>
+            <p class="text-slate-500 text-sm mt-1">Manage projects, assign work, and track progress across all
+                locations.</p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white border border-slate-200 rounded-xl p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Projects</p>
+                <p class="text-2xl font-bold text-slate-900">24</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">In Progress</p>
+                <p class="text-2xl font-bold text-orange-500">18</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Approvals Pending</p>
+                <p class="text-2xl font-bold text-blue-900">5</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-5">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Completed</p>
+                <p class="text-2xl font-bold text-emerald-600">6</p>
+            </div>
+        </div>
+
+        <!-- Tabs + Filter Row -->
+        <div
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
+            <!-- Tabs -->
+            <div class="flex items-center gap-6">
+                <button id="tabOngoing" onclick="switchDashTab('ongoing')"
+                    class="tab-underline active text-sm font-semibold text-slate-900 pb-3 cursor-pointer">
+                    Ongoing Work
+                </button>
+                <button id="tabCompleted" onclick="switchDashTab('completed')"
+                    class="tab-underline text-sm font-medium text-slate-400 hover:text-slate-600 pb-3 cursor-pointer transition-colors">
+                    Completed Work
+                </button>
+            </div>
+
+            <!-- Filter -->
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                </svg>
+                <select
+                    class="pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 appearance-none cursor-pointer focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200">
+                    <option>All Locations</option>
+                    <option>Mumbai, Maharashtra</option>
+                    <option>Lucknow, Uttar Pradesh</option>
+                    <option>Bhopal, Madhya Pradesh</option>
+                    <option>Jaipur, Rajasthan</option>
+                </select>
+                <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+            </div>
+        </div>
+
+
+        <!-- ===== PROJECT CARDS (Ongoing) ===== -->
+        <div id="ongoingList" class="flex flex-col gap-4">
+
+            <!-- Card 1 -->
+            <div
+                class="project-card bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row">
+                <!-- Left: Site Photo -->
+                <div
+                    class="md:w-56 h-44 md:h-auto bg-slate-100 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                    <div class="text-center px-4">
+                        <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor"
+                            stroke-width="1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                        </svg>
+                        <p class="text-xs text-slate-400">Site Photo</p>
+                    </div>
+                </div>
+
+                <!-- Middle: Details -->
+                <div class="flex-1 p-6">
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-900 mb-0.5">National Highway NH-48 Expansion</h3>
+                            <p class="text-sm text-slate-400 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                                Mumbai, Maharashtra
+                            </p>
+                        </div>
+                        <!-- Status Badge -->
+                        <span
+                            class="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Approval Requested
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-slate-500 mb-1">Contractor: <span class="text-slate-700 font-medium">Sharma
+                            Constructions Pvt. Ltd.</span></p>
+                    <p class="text-sm text-slate-500 mb-4">Budget: <span class="text-slate-700 font-medium">₹12.5
+                            Cr</span></p>
+
+                    <!-- Progress Bar -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="progress-fill h-full bg-orange-500 rounded-full" style="width: 65%"></div>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500 w-10 text-right">65%</span>
+                    </div>
+                </div>
+
+                <!-- Right: Action -->
+                <div
+                    class="flex md:flex-col items-center justify-center gap-3 p-4 md:p-6 md:border-l border-t md:border-t-0 border-slate-100">
+                    <a href="#"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all">
+                        View More
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div
+                class="project-card bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row">
+                <div class="md:w-56 h-44 md:h-auto bg-slate-100 flex items-center justify-center flex-shrink-0">
+                    <div class="text-center px-4">
+                        <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor"
+                            stroke-width="1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                        </svg>
+                        <p class="text-xs text-slate-400">Site Photo</p>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-6">
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-900 mb-0.5">Community Health Center Construction
+                            </h3>
+                            <p class="text-sm text-slate-400 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                                Lucknow, Uttar Pradesh
+                            </p>
+                        </div>
+                        <span
+                            class="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Ongoing
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-slate-500 mb-1">Contractor: <span class="text-slate-700 font-medium">Patel
+                            Infrastructure Group</span></p>
+                    <p class="text-sm text-slate-500 mb-4">Budget: <span class="text-slate-700 font-medium">₹4.8
+                            Cr</span></p>
+
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="progress-fill h-full bg-blue-900 rounded-full" style="width: 42%"></div>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500 w-10 text-right">42%</span>
+                    </div>
+                </div>
+
+                <div
+                    class="flex md:flex-col items-center justify-center gap-3 p-4 md:p-6 md:border-l border-t md:border-t-0 border-slate-100">
+                    <a href="#"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all">
+                        View More
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div
+                class="project-card bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row">
+                <div class="md:w-56 h-44 md:h-auto bg-slate-100 flex items-center justify-center flex-shrink-0">
+                    <div class="text-center px-4">
+                        <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor"
+                            stroke-width="1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                        </svg>
+                        <p class="text-xs text-slate-400">Site Photo</p>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-6">
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                            <h3 class="font-bold text-base text-slate-900 mb-0.5">District Water Pipeline Network</h3>
+                            <p class="text-sm text-slate-400 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                                Bhopal, Madhya Pradesh
+                            </p>
+                        </div>
+                        <span
+                            class="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                            Delayed
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-slate-500 mb-1">Contractor: <span class="text-slate-700 font-medium">Gupta &
+                            Sons Builders</span></p>
+                    <p class="text-sm text-slate-500 mb-4">Budget: <span class="text-slate-700 font-medium">₹8.2
+                            Cr</span></p>
+
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="progress-fill h-full bg-orange-500 rounded-full" style="width: 28%"></div>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500 w-10 text-right">28%</span>
+                    </div>
+                </div>
+
+                <div
+                    class="flex md:flex-col items-center justify-center gap-3 p-4 md:p-6 md:border-l border-t md:border-t-0 border-slate-100">
+                    <a href="#"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all">
+                        View More
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ===== COMPLETED LIST (Hidden by default) ===== -->
+        <div id="completedList" class="flex flex-col gap-4 hidden">
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center">
+                <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" stroke-width="1"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="font-semibold text-slate-700 mb-1">6 Projects Completed</h3>
+                <p class="text-sm text-slate-400">All completed projects will appear here with verification reports.</p>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- ===== FLOATING ACTION BUTTON ===== -->
+    <button onclick="openAddModal()"
+        class="fab fixed bottom-8 right-8 w-14 h-14 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg shadow-orange-500/30 flex items-center justify-center z-30">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+    </button>
+
+
+    <!-- ===== "ADD NEW WORK" MODAL ===== -->
+    <div id="addWorkModal" class="modal-overlay fixed inset-0 bg-black/30 z-50 hidden items-center justify-center p-4">
+        <div
+            class="modal-content bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
+            <!-- Header -->
+            <div class="px-8 pt-8 pb-2 flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-lg text-slate-900">Add New Work</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Create a new project assignment</p>
+                </div>
+                <button onclick="closeAddModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="addWorkForm" class="px-8 pb-8 pt-4" onsubmit="handleCreateProject(event)">
+                <!-- Work Name -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="workName">Work Name</label>
+                    <input type="text" id="workName" placeholder="e.g., Bridge Construction NH-48" required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all">
+                </div>
+
+                <!-- Location -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="workLocation">Location</label>
+                    <input type="text" id="workLocation" placeholder="e.g., Mumbai, Maharashtra" required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all">
+                </div>
+
+                <!-- Contractor Name -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="workContractor">Contractor
+                        Name</label>
+                    <input type="text" id="workContractor" placeholder="e.g., Sharma Constructions Pvt. Ltd." required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all">
+                </div>
+
+                <!-- Contractor Email -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="workContractorEmail">Contractor
+                        Email</label>
+                    <input type="email" id="workContractorEmail" placeholder="contractor@example.com" required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all">
+                </div>
+
+                <!-- Funding / Budget -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="workBudget">Funding /
+                        Budget</label>
+                    <div class="relative">
+                        <span
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">₹</span>
+                        <input type="text" id="workBudget" placeholder="e.g., 12,50,00,000" required
+                            class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all">
+                    </div>
+                </div>
+
+                <!-- Estimated Deadline -->
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="workDeadline">Estimated
+                        Deadline</label>
+                    <input type="date" id="workDeadline" required
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200 transition-all">
+                </div>
+
+                <!-- Upload Site Photo -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Upload Site Photo</label>
+                    <div id="dropZone" class="drop-zone rounded-xl p-6 text-center cursor-pointer"
+                        onclick="document.getElementById('fileInput').click()">
+                        <svg class="w-8 h-8 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor"
+                            stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                        <p class="text-sm text-slate-500">Drag & drop an image here, or <span
+                                class="text-orange-500 font-medium">browse</span></p>
+                        <p class="text-xs text-slate-400 mt-1">PNG, JPG up to 10MB</p>
+                        <p id="fileName" class="text-xs text-emerald-600 font-medium mt-2 hidden"></p>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden"
+                        onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeAddModal()"
+                        class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition-colors">
+                        Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // --- Tab Switching ---
+        function switchDashTab(tab) {
+            const ongoingTab = document.getElementById('tabOngoing');
+            const completedTab = document.getElementById('tabCompleted');
+            const ongoingList = document.getElementById('ongoingList');
+            const completedList = document.getElementById('completedList');
+
+            if (tab === 'ongoing') {
+                ongoingTab.className = 'tab-underline active text-sm font-semibold text-slate-900 pb-3 cursor-pointer';
+                completedTab.className = 'tab-underline text-sm font-medium text-slate-400 hover:text-slate-600 pb-3 cursor-pointer transition-colors';
+                ongoingList.classList.remove('hidden');
+                completedList.classList.add('hidden');
+            } else {
+                completedTab.className = 'tab-underline active text-sm font-semibold text-slate-900 pb-3 cursor-pointer';
+                ongoingTab.className = 'tab-underline text-sm font-medium text-slate-400 hover:text-slate-600 pb-3 cursor-pointer transition-colors';
+                completedList.classList.remove('hidden');
+                ongoingList.classList.add('hidden');
+            }
+        }
+
+        // --- Modal Controls ---
+        function openAddModal() {
+            const modal = document.getElementById('addWorkModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('workName').focus();
+        }
+
+        function closeAddModal() {
+            const modal = document.getElementById('addWorkModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('addWorkForm').reset();
+            document.getElementById('fileName').classList.add('hidden');
+        }
+
+        // Close on backdrop click
+        document.getElementById('addWorkModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeAddModal();
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAddModal();
+        });
+
+        // --- File Upload ---
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const nameEl = document.getElementById('fileName');
+                nameEl.textContent = `✓ ${file.name}`;
+                nameEl.classList.remove('hidden');
+            }
+        }
+
+        // Drag & Drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                document.getElementById('fileInput').files = e.dataTransfer.files;
+                const nameEl = document.getElementById('fileName');
+                nameEl.textContent = `✓ ${e.dataTransfer.files[0].name}`;
+                nameEl.classList.remove('hidden');
+            }
+        });
+
+        // --- Auth check ---
+        const user = JSON.parse(localStorage.getItem('nirmaan_user') || 'null');
+        if (user && user.name) {
+            const avatar = document.querySelector('.rounded-full span');
+            if (avatar) avatar.textContent = user.name.charAt(0).toUpperCase();
+            const nameEl = document.querySelector('.border-l .text-sm.font-semibold');
+            if (nameEl) nameEl.textContent = user.name;
+        }
+    </script>
+
+    <!-- External admin logic (fetch, render, form submit) -->
+    <script src="js/admin.js"></script>
+</body>
+
+</html>

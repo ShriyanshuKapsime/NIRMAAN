@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIRMAAN — Development Transparency Platform</title>
+    <meta name="description"
+        content="NIRMAAN empowers citizens, contractors, and administrators to track development projects with full transparency and accountability.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #ffffff;
+            color: #1e293b;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Modal animations — preserved */
+        .modal-overlay {
+            backdrop-filter: blur(6px);
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Tab styles — preserved IDs, updated visuals */
+        .tab-active {
+            background: #1e3a5f;
+            color: #ffffff;
+        }
+
+        .tab-inactive {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .tab-inactive:hover {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        /* Auth input — preserved class name */
+        .auth-input {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .auth-input:focus {
+            background: #ffffff;
+            border-color: #1e3a5f;
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.08);
+            outline: none;
+        }
+
+        /* Toast — preserved */
+        .toast {
+            animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Delicate step connector for desktop */
+        @media (min-width: 768px) {
+            .step-card:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                top: 40px;
+                right: -28px;
+                width: 56px;
+                height: 1px;
+                background: #cbd5e1;
+            }
+        }
+
+        /* Animated infrastructure background */
+        @keyframes panSkyline {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .hero-skyline {
+            animation: panSkyline 60s linear infinite;
+            will-change: transform;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="w-full border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <span class="font-extrabold text-lg text-gray-900 tracking-tight">NIRMAAN</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm text-gray-500 font-medium">
+                <a href="#how-it-works" class="hover:text-gray-900 transition-colors">How It Works</a>
+                <a href="#portals" class="hover:text-gray-900 transition-colors">Portals</a>
+                <a href="#portals"
+                    class="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-semibold">Sign
+                    In</a>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- ===== HERO SECTION ===== -->
+    <section class="bg-slate-50 relative overflow-hidden flex flex-col items-center justify-center px-6 py-14">
+
+        <!-- Animated infrastructure skyline background -->
+        <div class="absolute inset-0 flex items-end pointer-events-none" style="opacity: 0.045;">
+            <div class="hero-skyline flex-shrink-0" style="width: 200%; height: 100%;">
+                <svg viewBox="0 0 2400 300" preserveAspectRatio="none" fill="none" stroke="#334155" stroke-width="1"
+                    style="width: 100%; height: 100%;">
+                    <!-- Buildings cluster 1 -->
+                    <rect x="40" y="120" width="50" height="180" rx="2" />
+                    <rect x="45" y="135" width="10" height="14" rx="1" />
+                    <rect x="60" y="135" width="10" height="14" rx="1" />
+                    <rect x="45" y="160" width="10" height="14" rx="1" />
+                    <rect x="60" y="160" width="10" height="14" rx="1" />
+                    <rect x="45" y="185" width="10" height="14" rx="1" />
+                    <rect x="60" y="185" width="10" height="14" rx="1" />
+                    <rect x="100" y="160" width="35" height="140" rx="2" />
+                    <rect x="105" y="175" width="8" height="12" rx="1" />
+                    <rect x="118" y="175" width="8" height="12" rx="1" />
+                    <rect x="105" y="195" width="8" height="12" rx="1" />
+                    <rect x="118" y="195" width="8" height="12" rx="1" />
+                    <rect x="145" y="190" width="45" height="110" rx="2" />
+                    <rect x="150" y="205" width="10" height="12" rx="1" />
+                    <rect x="165" y="205" width="10" height="12" rx="1" />
+                    <rect x="150" y="225" width="10" height="12" rx="1" />
+                    <rect x="165" y="225" width="10" height="12" rx="1" />
+
+                    <!-- Crane 1 -->
+                    <line x1="250" y1="60" x2="250" y2="300" />
+                    <line x1="240" y1="60" x2="330" y2="60" />
+                    <line x1="330" y1="60" x2="330" y2="90" />
+                    <line x1="240" y1="60" x2="220" y2="80" />
+                    <line x1="250" y1="80" x2="240" y2="300" stroke-dasharray="4 3" />
+
+                    <!-- Bridge -->
+                    <line x1="370" y1="240" x2="550" y2="240" />
+                    <path d="M370 240 Q460 180 550 240" />
+                    <line x1="400" y1="240" x2="400" y2="210" />
+                    <line x1="430" y1="240" x2="430" y2="195" />
+                    <line x1="460" y1="240" x2="460" y2="188" />
+                    <line x1="490" y1="240" x2="490" y2="195" />
+                    <line x1="520" y1="240" x2="520" y2="210" />
+
+                    <!-- Buildings cluster 2 -->
+                    <rect x="600" y="140" width="60" height="160" rx="2" />
+                    <rect x="608" y="155" width="12" height="14" rx="1" />
+                    <rect x="626" y="155" width="12" height="14" rx="1" />
+                    <rect x="608" y="180" width="12" height="14" rx="1" />
+                    <rect x="626" y="180" width="12" height="14" rx="1" />
+                    <rect x="608" y="205" width="12" height="14" rx="1" />
+                    <rect x="626" y="205" width="12" height="14" rx="1" />
+                    <rect x="670" y="180" width="40" height="120" rx="2" />
+                    <rect x="676" y="195" width="10" height="12" rx="1" />
+                    <rect x="692" y="195" width="10" height="12" rx="1" />
+                    <rect x="676" y="215" width="10" height="12" rx="1" />
+                    <rect x="692" y="215" width="10" height="12" rx="1" />
+                    <rect x="720" y="100" width="30" height="200" rx="2" />
+                    <rect x="726" y="115" width="8" height="10" rx="1" />
+                    <rect x="726" y="135" width="8" height="10" rx="1" />
+                    <rect x="726" y="155" width="8" height="10" rx="1" />
+                    <rect x="726" y="175" width="8" height="10" rx="1" />
+
+                    <!-- Road with dashes -->
+                    <line x1="780" y1="280" x2="960" y2="280" />
+                    <line x1="790" y1="270" x2="810" y2="270" stroke-dasharray="8 6" />
+                    <line x1="830" y1="270" x2="850" y2="270" stroke-dasharray="8 6" />
+                    <line x1="870" y1="270" x2="890" y2="270" stroke-dasharray="8 6" />
+                    <line x1="910" y1="270" x2="930" y2="270" stroke-dasharray="8 6" />
+
+                    <!-- Crane 2 -->
+                    <line x1="1000" y1="80" x2="1000" y2="300" />
+                    <line x1="990" y1="80" x2="1080" y2="80" />
+                    <line x1="1080" y1="80" x2="1080" y2="110" />
+                    <line x1="990" y1="80" x2="970" y2="100" />
+
+                    <!-- Buildings cluster 3 -->
+                    <rect x="1100" y="170" width="55" height="130" rx="2" />
+                    <rect x="1108" y="185" width="10" height="12" rx="1" />
+                    <rect x="1125" y="185" width="10" height="12" rx="1" />
+                    <rect x="1108" y="205" width="10" height="12" rx="1" />
+                    <rect x="1125" y="205" width="10" height="12" rx="1" />
+                    <rect x="1165" y="130" width="40" height="170" rx="2" />
+                    <rect x="1171" y="145" width="8" height="10" rx="1" />
+                    <rect x="1171" y="165" width="8" height="10" rx="1" />
+                    <rect x="1171" y="185" width="8" height="10" rx="1" />
+                    <rect x="1171" y="205" width="8" height="10" rx="1" />
+
+                    <!-- Repeat first half for seamless loop -->
+                    <rect x="1240" y="120" width="50" height="180" rx="2" />
+                    <rect x="1245" y="135" width="10" height="14" rx="1" />
+                    <rect x="1260" y="135" width="10" height="14" rx="1" />
+                    <rect x="1245" y="160" width="10" height="14" rx="1" />
+                    <rect x="1260" y="160" width="10" height="14" rx="1" />
+                    <rect x="1300" y="160" width="35" height="140" rx="2" />
+                    <rect x="1345" y="190" width="45" height="110" rx="2" />
+                    <line x1="1450" y1="60" x2="1450" y2="300" />
+                    <line x1="1440" y1="60" x2="1530" y2="60" />
+                    <line x1="1530" y1="60" x2="1530" y2="90" />
+                    <line x1="1440" y1="60" x2="1420" y2="80" />
+                    <line x1="1570" y1="240" x2="1750" y2="240" />
+                    <path d="M1570 240 Q1660 180 1750 240" />
+                    <line x1="1600" y1="240" x2="1600" y2="210" />
+                    <line x1="1660" y1="240" x2="1660" y2="188" />
+                    <line x1="1720" y1="240" x2="1720" y2="210" />
+                    <rect x="1800" y="140" width="60" height="160" rx="2" />
+                    <rect x="1870" y="180" width="40" height="120" rx="2" />
+                    <rect x="1920" y="100" width="30" height="200" rx="2" />
+                    <line x1="1980" y1="280" x2="2160" y2="280" />
+                    <line x1="2200" y1="80" x2="2200" y2="300" />
+                    <line x1="2190" y1="80" x2="2280" y2="80" />
+                    <line x1="2280" y1="80" x2="2280" y2="110" />
+                    <rect x="2300" y="170" width="55" height="130" rx="2" />
+                    <rect x="2365" y="130" width="40" height="170" rx="2" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Hero content -->
+        <div class="text-center max-w-3xl mx-auto relative z-10">
+            <!-- Main Title -->
+            <h1
+                class="font-extrabold text-6xl md:text-7xl lg:text-8xl tracking-tight text-gray-900 mb-6 leading-[0.95]">
+                NIRMAAN
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-lg md:text-xl text-gray-500 max-w-xl mx-auto mb-10 leading-relaxed font-normal">
+                Where Every Brick is Accountable.
+            </p>
+
+            <!-- CTA Button -->
+            <a href="#portals" id="getStartedBtn"
+                class="inline-flex items-center gap-2 px-7 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-lg transition-colors duration-200">
+                Get Started
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+            </a>
+        </div>
+    </section>
+
+
+    <!-- ===== FLOW DIAGRAM SECTION ===== -->
+    <section class="bg-white py-28 px-6" id="how-it-works">
+        <div class="max-w-5xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-20">
+                <p class="text-orange-500 font-semibold text-xs tracking-widest uppercase mb-3">How It Works</p>
+                <h2 class="font-extrabold text-3xl md:text-4xl text-gray-900 tracking-tight">
+                    Three Steps to Transparency
+                </h2>
+                <p class="text-gray-500 mt-4 max-w-lg mx-auto text-base">A simple workflow connecting every stakeholder
+                    in the development process.</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8">
+                <!-- Step 1 -->
+                <div class="step-card relative flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-blue-900" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Step 1</span>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Admin Assigns Work</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed max-w-xs">The administrator creates projects and
+                        assigns construction tasks to verified contractors.</p>
+                </div>
+
+                <!-- Mobile arrow -->
+                <div class="flex md:hidden justify-center">
+                    <svg class="w-5 h-5 text-gray-300 rotate-90" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card relative flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-xl bg-orange-50 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Step 2</span>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Contractor Uploads Progress</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed max-w-xs">Contractors document and upload real-time
+                        progress with photos, reports, and milestones.</p>
+                </div>
+
+                <!-- Mobile arrow -->
+                <div class="flex md:hidden justify-center">
+                    <svg class="w-5 h-5 text-gray-300 rotate-90" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card relative flex flex-col items-center text-center">
+                    <div class="w-16 h-16 rounded-xl bg-emerald-50 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.745 3.745 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Step 3</span>
+                    <h3 class="font-bold text-lg text-gray-900 mb-2">Citizen Verifies Reality</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed max-w-xs">Citizens verify on-ground progress, report
+                        discrepancies, and hold stakeholders accountable.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ===== DIVIDER ===== -->
+    <div class="max-w-5xl mx-auto px-6">
+        <hr class="border-gray-100">
+    </div>
+
+
+    <!-- ===== AUTH PORTAL SECTION ===== -->
+    <section class="bg-white py-28 px-6" id="portals">
+        <div class="max-w-4xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <p class="text-orange-500 font-semibold text-xs tracking-widest uppercase mb-3">Select Your Role</p>
+                <h2 class="font-extrabold text-3xl md:text-4xl text-gray-900 tracking-tight">
+                    Choose Your Portal
+                </h2>
+                <p class="text-gray-500 mt-4 max-w-lg mx-auto text-base">Sign in or create an account to access your
+                    personalized dashboard.</p>
+            </div>
+
+            <!-- Portal Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Admin Portal -->
+                <button onclick="openAuthModal('admin')" id="adminPortalBtn"
+                    class="group bg-white border border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:shadow-md transition-all duration-300">
+                    <div
+                        class="w-14 h-14 mx-auto mb-5 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
+                        <svg class="w-7 h-7 text-blue-900" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-base text-gray-900 mb-1.5">Admin Portal</h3>
+                    <p class="text-gray-500 text-sm mb-5 leading-relaxed">Manage projects, assign tasks, and oversee
+                        progress.</p>
+                    <span
+                        class="inline-flex items-center gap-1 text-blue-900 text-sm font-semibold group-hover:gap-2 transition-all duration-200">
+                        Enter
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Contractor Portal -->
+                <button onclick="openAuthModal('contractor')" id="contractorPortalBtn"
+                    class="group bg-white border border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:shadow-md transition-all duration-300">
+                    <div
+                        class="w-14 h-14 mx-auto mb-5 rounded-lg bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors duration-300">
+                        <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M11.42 15.17l-5.66-5.66a2.25 2.25 0 113.18-3.18l5.66 5.66m-3.18 3.18l5.66 5.66a2.25 2.25 0 003.18-3.18l-5.66-5.66m-3.18 3.18L8.78 19.7a2.25 2.25 0 01-3.18-3.18l3.46-3.46" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-base text-gray-900 mb-1.5">Contractor Portal</h3>
+                    <p class="text-gray-500 text-sm mb-5 leading-relaxed">Upload progress, manage milestones, and
+                        communicate.</p>
+                    <span
+                        class="inline-flex items-center gap-1 text-orange-600 text-sm font-semibold group-hover:gap-2 transition-all duration-200">
+                        Enter
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Citizen Portal -->
+                <button onclick="openAuthModal('citizen')" id="citizenPortalBtn"
+                    class="group bg-white border border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:shadow-md transition-all duration-300">
+                    <div
+                        class="w-14 h-14 mx-auto mb-5 rounded-lg bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors duration-300">
+                        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-base text-gray-900 mb-1.5">Citizen Portal</h3>
+                    <p class="text-gray-500 text-sm mb-5 leading-relaxed">Verify projects, report issues, and ensure
+                        quality.</p>
+                    <span
+                        class="inline-flex items-center gap-1 text-emerald-600 text-sm font-semibold group-hover:gap-2 transition-all duration-200">
+                        Enter
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="border-t border-gray-100 bg-slate-50 py-10 px-6 text-center">
+        <p class="text-gray-400 text-sm">&copy; 2026 <span class="font-semibold text-gray-600">NIRMAAN</span> &mdash;
+            Development Transparency Platform</p>
+    </footer>
+
+
+    <!-- ===== AUTH MODAL (IDs and JS logic preserved exactly) ===== -->
+    <div id="authModal" class="modal-overlay fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+        <div
+            class="modal-content bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
+            <!-- Close Button -->
+            <button onclick="closeAuthModal()" id="closeModalBtn"
+                class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors z-10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="px-8 pt-8 pb-4">
+                <div class="flex items-center gap-3 mb-1">
+                    <div id="modalRoleIcon"
+                        class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="1.5"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-900" id="modalTitle">Admin Portal</h3>
+                        <p class="text-gray-500 text-sm" id="modalSubtitle">Sign in to your account</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="px-8 flex gap-2 mb-6">
+                <button onclick="switchTab('login')" id="loginTab"
+                    class="tab-active flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200">Login</button>
+                <button onclick="switchTab('signup')" id="signupTab"
+                    class="tab-inactive flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200">Sign
+                    Up</button>
+            </div>
+
+            <!-- Form -->
+            <form id="authForm" class="px-8 pb-8" onsubmit="handleSubmit(event)">
+                <!-- Hidden role -->
+                <input type="hidden" id="roleInput" name="role" value="admin">
+
+                <!-- Name (Sign Up only) -->
+                <div id="nameField" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5" for="nameInput">Full Name</label>
+                    <input type="text" id="nameInput" name="name" placeholder="Enter your full name"
+                        class="auth-input w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-400 text-sm">
+                </div>
+
+                <!-- Email -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5" for="emailInput">Email Address</label>
+                    <input type="email" id="emailInput" name="email" placeholder="you@example.com" required
+                        class="auth-input w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-400 text-sm">
+                </div>
+
+                <!-- Password -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5" for="passwordInput">Password</label>
+                    <input type="password" id="passwordInput" name="password" placeholder="••••••••" required
+                        minlength="6"
+                        class="auth-input w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-400 text-sm">
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" id="submitBtn"
+                    class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors duration-200 text-sm">
+                    Login
+                </button>
+
+                <!-- Message -->
+                <div id="formMessage" class="mt-4 text-center text-sm hidden"></div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div id="toastContainer" class="fixed top-6 right-6 z-[60] flex flex-col gap-3"></div>
+
+
+    <!-- ===== JAVASCRIPT (preserved exactly — no changes) ===== -->
+    <script>
+        // State
+        let currentTab = 'login';
+        let currentRole = 'admin';
+        const API_BASE = window.location.origin;
+
+        // --- Modal Controls ---
+        function openAuthModal(role) {
+            currentRole = role;
+            document.getElementById('roleInput').value = role;
+
+            // Update modal title
+            const roleName = role.charAt(0).toUpperCase() + role.slice(1);
+            document.getElementById('modalTitle').textContent = `${roleName} Portal`;
+
+            // Update icon colors based on role
+            const iconContainer = document.getElementById('modalRoleIcon');
+            const colorMap = {
+                admin: { bg: 'bg-blue-50', border: 'border-blue-100' },
+                contractor: { bg: 'bg-orange-50', border: 'border-orange-100' },
+                citizen: { bg: 'bg-emerald-50', border: 'border-emerald-100' },
+            };
+            iconContainer.className = `w-10 h-10 rounded-lg ${colorMap[role].bg} ${colorMap[role].border} border flex items-center justify-center`;
+
+            // Reset to login tab
+            switchTab('login');
+            clearFormMessage();
+
+            // Show modal
+            const modal = document.getElementById('authModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Focus email
+            setTimeout(() => document.getElementById('emailInput').focus(), 100);
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('authModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('authForm').reset();
+            clearFormMessage();
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('authModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeAuthModal();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAuthModal();
+        });
+
+        // --- Tab Switching ---
+        function switchTab(tab) {
+            currentTab = tab;
+            const loginTab = document.getElementById('loginTab');
+            const signupTab = document.getElementById('signupTab');
+            const nameField = document.getElementById('nameField');
+            const submitBtn = document.getElementById('submitBtn');
+            const modalSubtitle = document.getElementById('modalSubtitle');
+
+            if (tab === 'login') {
+                loginTab.className = 'tab-active flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200';
+                signupTab.className = 'tab-inactive flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200';
+                nameField.classList.add('hidden');
+                submitBtn.textContent = 'Login';
+                modalSubtitle.textContent = 'Sign in to your account';
+            } else {
+                signupTab.className = 'tab-active flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200';
+                loginTab.className = 'tab-inactive flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200';
+                nameField.classList.remove('hidden');
+                submitBtn.textContent = 'Create Account';
+                modalSubtitle.textContent = 'Create a new account';
+            }
+
+            clearFormMessage();
+        }
+
+        // --- Form Submission ---
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Please wait...';
+            submitBtn.disabled = true;
+
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const role = document.getElementById('roleInput').value;
+
+            try {
+                if (currentTab === 'signup') {
+                    // --- REGISTER ---
+                    const name = document.getElementById('nameInput').value.trim();
+                    if (!name) {
+                        showFormMessage('Please enter your full name.', 'error');
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        return;
+                    }
+
+                    const res = await fetch(`${API_BASE}/api/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, password, role })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        localStorage.setItem('nirmaan_token', data.token);
+                        localStorage.setItem('nirmaan_user', JSON.stringify(data.user));
+                        showToast('Registration successful! Redirecting...', 'success');
+                        showFormMessage('Account created successfully!', 'success');
+                        setTimeout(() => {
+                            closeAuthModal();
+                            window.location.href = `${data.user.role}.html`;
+                        }, 1500);
+                    } else {
+                        showFormMessage(data.message || 'Registration failed.', 'error');
+                    }
+                } else {
+                    // --- LOGIN ---
+                    const res = await fetch(`${API_BASE}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        localStorage.setItem('nirmaan_token', data.token);
+                        localStorage.setItem('nirmaan_user', JSON.stringify(data.user));
+                        showToast('Login successful! Redirecting...', 'success');
+                        showFormMessage('Login successful!', 'success');
+                        setTimeout(() => {
+                            closeAuthModal();
+                            window.location.href = `${data.user.role}.html`;
+                        }, 1500);
+                    } else {
+                        showFormMessage(data.message || 'Login failed.', 'error');
+                    }
+                }
+            } catch (err) {
+                console.error('Auth error:', err);
+                showFormMessage('Network error. Please try again.', 'error');
+            }
+
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+
+        // --- Message Helpers ---
+        function showFormMessage(msg, type) {
+            const el = document.getElementById('formMessage');
+            el.textContent = msg;
+            el.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            el.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+        }
+
+        function clearFormMessage() {
+            document.getElementById('formMessage').classList.add('hidden');
+        }
+
+        function showToast(msg, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+            toast.className = `toast ${bgColor} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        }
+    </script>
+</body>
+
+</html>
