@@ -12,7 +12,8 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // To parse JSON bodies
+// Large payloads for AI improve-writing (project + all claims + citizen samples)
+app.use(express.json({ limit: '4mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static frontend files from the 'public' folder
@@ -46,6 +47,9 @@ app.use('/api/requests', require('./server/routes/requestRoutes'));
 
 // Report routes
 app.use('/api/reports', require('./server/routes/reportRoutes'));
+
+// AI helpers (improve writing, simplify technical)
+app.use('/api/ai', require('./server/routes/aiRoutes'));
 
 // Start Server
 const PORT = process.env.PORT || 5000;
