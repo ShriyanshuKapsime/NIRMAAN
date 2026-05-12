@@ -129,6 +129,7 @@ let currentReviewId = null;
 
 function openReviewModal(reqId, from, to, photo, desc) {
     currentReviewId = reqId;
+    resetAIState();
     document.getElementById('modalReqId').textContent = 'REQ-' + reqId.slice(-6).toUpperCase();
     document.getElementById('modalFrom').textContent = from + '%';
     document.getElementById('modalTo').textContent = to + '%';
@@ -164,6 +165,7 @@ function closeApprovalModal() {
     m.classList.remove('flex');
     currentReviewId = null;
     document.getElementById('adminCommentField').value = '';
+    resetAIState();
 }
 
 // Close on backdrop / escape
@@ -437,4 +439,166 @@ function attachSafeListeners() {
             openReviewModal(id, from, to, photo, desc);
         }
     });
+}
+
+
+// ======================
+// AI MULTI-AGENT ADJUDICATION
+// ======================
+
+/** Reset all AI-related UI elements when the modal opens or closes */
+function resetAIState() {
+    const loading = document.getElementById('aiLoadingState');
+    const results = document.getElementById('aiResultsContainer');
+    const btn = document.getElementById('aiAdjudicateBtn');
+    const gallery = document.getElementById('aiPhotoGallery');
+
+    if (loading) loading.classList.add('hidden');
+    if (results) results.classList.add('hidden');
+    if (gallery) gallery.classList.add('hidden');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg> Run AI Adjudication`;
+    }
+}
+
+/**
+ * runAdminAI() — Triggered by the "Run AI Adjudication" button inside the approval modal.
+ * Calls POST /api/ai/admin-adjudicate/:requestId, then renders the 3-agent output.
+ */
+async function runAdminAI() {
+    if (!currentReviewId) {
+        showToast('No request selected for analysis.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('aiAdjudicateBtn');
+    const loading = document.getElementById('aiLoadingState');
+    const results = document.getElementById('aiResultsContainer');
+
+    // --- Show loading state ---
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Analyzing...`;
+    loading.classList.remove('hidden');
+    results.classList.add('hidden');
+
+    try {
+        const res = await fetch(`${API}/api/ai/admin-adjudicate/${currentReviewId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || 'AI adjudication failed.');
+        }
+
+        const r = data.result;
+        const meta = data.meta;
+
+        // --- Populate results ---
+
+        // Agent A: Location
+        document.getElementById('aiLocationResult').textContent = r.locationVerification || '—';
+
+        // Agent B: Scope & Sentiment
+        document.getElementById('aiScopeResult').textContent = r.scopeAndSentiment || '—';
+
+        // Divergence Score
+        const score = r.divergenceScore;
+        document.getElementById('aiScoreValue').textContent = score.toFixed(2);
+
+        // Animate the score bar after a short delay
+        const scoreBar = document.getElementById('aiScoreBar');
+        const pct = Math.round(score * 100);
+
+        // Color gradient based on score
+        let barColor;
+        if (score <= 0.3) {
+            barColor = 'linear-gradient(90deg, #22c55e, #4ade80)'; // green
+        } else if (score <= 0.6) {
+            barColor = 'linear-gradient(90deg, #f59e0b, #fbbf24)'; // amber
+        } else {
+            barColor = 'linear-gradient(90deg, #ef4444, #f87171)'; // red
+        }
+
+        // Score value text color
+        const scoreValueEl = document.getElementById('aiScoreValue');
+        if (score <= 0.3) scoreValueEl.className = 'text-xl font-bold tabular-nums text-emerald-600';
+        else if (score <= 0.6) scoreValueEl.className = 'text-xl font-bold tabular-nums text-amber-600';
+        else scoreValueEl.className = 'text-xl font-bold tabular-nums text-red-600';
+
+        setTimeout(() => {
+            scoreBar.style.width = pct + '%';
+            scoreBar.style.background = barColor;
+        }, 100);
+
+        // Executive Summary + Recommendation Badge
+        document.getElementById('aiExecutiveSummary').textContent = r.executiveSummary || '—';
+
+        const badge = document.getElementById('aiRecommendationBadge');
+        const summaryCard = document.getElementById('aiSummaryCard');
+        const rec = r.recommendation;
+
+        if (rec === 'Approve') {
+            badge.className = 'inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700';
+            badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Approve';
+            summaryCard.style.background = '#f0fdf4';
+            summaryCard.style.borderColor = '#bbf7d0';
+        } else if (rec === 'Reject') {
+            badge.className = 'inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700';
+            badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Reject';
+            summaryCard.style.background = '#fef2f2';
+            summaryCard.style.borderColor = '#fecaca';
+        } else {
+            badge.className = 'inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700';
+            badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Manual Inspection';
+            summaryCard.style.background = '#fffbeb';
+            summaryCard.style.borderColor = '#fde68a';
+        }
+
+        // --- Photo Comparison Gallery ---
+        const gallery = document.getElementById('aiPhotoGallery');
+        const contractorPhotoEl = document.getElementById('aiContractorPhoto');
+        const citizenPhotosEl = document.getElementById('aiCitizenPhotos');
+
+        const contractorPhoto = meta.contractorPhoto;
+        const citizenPhotos = meta.citizenPhotos || [];
+
+        if (contractorPhoto || citizenPhotos.length > 0) {
+            gallery.classList.remove('hidden');
+
+            // Contractor photo
+            if (contractorPhoto && contractorPhoto !== 'undefined') {
+                contractorPhotoEl.innerHTML = `<img src="${contractorPhoto}" alt="Contractor proof" class="w-full h-full object-cover"/>`;
+            } else {
+                contractorPhotoEl.innerHTML = '<p class="text-xs text-slate-400">No photo submitted</p>';
+            }
+
+            // Citizen photos (top 3)
+            if (citizenPhotos.length > 0) {
+                citizenPhotosEl.innerHTML = citizenPhotos.map((url, i) =>
+                    `<div class="h-24 bg-slate-100 rounded-lg overflow-hidden"><img src="${url}" alt="Citizen report ${i + 1}" class="w-full h-full object-cover"/></div>`
+                ).join('');
+            } else {
+                citizenPhotosEl.innerHTML = '<div class="h-32 bg-slate-100 rounded-lg flex items-center justify-center"><p class="text-xs text-slate-400">No citizen photos</p></div>';
+            }
+        } else {
+            gallery.classList.add('hidden');
+        }
+
+        // --- Show results, hide loading ---
+        loading.classList.add('hidden');
+        results.classList.remove('hidden');
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg> Analysis Complete`;
+        btn.disabled = false;
+
+    } catch (err) {
+        console.error('AI Adjudication error:', err);
+        loading.classList.add('hidden');
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg> Run AI Adjudication`;
+        showToast(err.message || 'AI analysis failed. Try again.', 'error');
+    }
 }

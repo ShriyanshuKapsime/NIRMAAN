@@ -488,6 +488,115 @@
                 <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Work Details</p>
                 <p class="text-sm text-slate-600 bg-slate-50 rounded-lg p-4 mb-5" id="modalDesc">No details provided.
                 </p>
+                <!-- AI Adjudication Section -->
+                <div class="mb-6 border-t border-slate-100 pt-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">AI Multi-Agent Analysis</p>
+                        <button id="aiAdjudicateBtn" onclick="runAdminAI()"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-semibold rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+                            Run AI Adjudication
+                        </button>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="aiLoadingState" class="hidden">
+                        <div class="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-xl p-5 text-center">
+                            <div class="flex items-center justify-center gap-3 mb-2">
+                                <div class="flex gap-1">
+                                    <span class="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style="animation-delay:0s"></span>
+                                    <span class="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style="animation-delay:0.15s"></span>
+                                    <span class="w-2 h-2 bg-violet-500 rounded-full animate-bounce" style="animation-delay:0.3s"></span>
+                                </div>
+                                <span class="text-sm font-semibold text-violet-700">Agents are analyzing...</span>
+                            </div>
+                            <p class="text-xs text-violet-500">Running 3 specialized AI agents (Location · Scope · Executive)</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Results Container -->
+                    <div id="aiResultsContainer" class="hidden space-y-4">
+
+                        <!-- Location Verification -->
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">A</span>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Location Verification</p>
+                            </div>
+                            <p class="text-sm text-slate-700 leading-relaxed" id="aiLocationResult">—</p>
+                        </div>
+
+                        <!-- Scope & Sentiment -->
+                        <div class="bg-slate-50 rounded-lg p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xs font-bold">B</span>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scope & Sentiment</p>
+                            </div>
+                            <p class="text-sm text-slate-700 leading-relaxed" id="aiScopeResult">—</p>
+                        </div>
+
+                        <!-- Divergence Score -->
+                        <div class="bg-white border border-slate-200 rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs font-bold">C</span>
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Divergence Score</p>
+                                    <!-- Info Tooltip -->
+                                    <div class="relative group">
+                                        <span class="w-4 h-4 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-[10px] font-bold cursor-help hover:bg-slate-300 transition-colors">i</span>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 pointer-events-none">
+                                            <div class="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
+                                            <p class="font-semibold mb-1">Divergence Score (0.0 – 1.0)</p>
+                                            <p>Indicates the mathematical discrepancy between the contractor's claim, project scope, and citizen reports. Higher scores indicate a higher probability of anomaly or fraud.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="text-xl font-bold tabular-nums" id="aiScoreValue">0.00</span>
+                            </div>
+                            <!-- Score Bar -->
+                            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <div id="aiScoreBar" class="h-full rounded-full transition-all duration-700 ease-out" style="width:0%; background: linear-gradient(90deg, #22c55e, #22c55e)"></div>
+                            </div>
+                            <div class="flex justify-between mt-1.5">
+                                <span class="text-[10px] text-slate-400">0.0 — Aligned</span>
+                                <span class="text-[10px] text-slate-400">1.0 — Fraud</span>
+                            </div>
+                        </div>
+
+                        <!-- Executive Summary & Recommendation -->
+                        <div class="rounded-xl p-4 border" id="aiSummaryCard" style="background:#f0fdf4;border-color:#bbf7d0">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Executive Summary</p>
+                                <span id="aiRecommendationBadge" class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold">—</span>
+                            </div>
+                            <p class="text-sm text-slate-700 leading-relaxed" id="aiExecutiveSummary">—</p>
+                        </div>
+
+                        <!-- Visual Comparison Gallery -->
+                        <div id="aiPhotoGallery" class="hidden">
+                            <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-3">Visual Comparison — Manual Verification</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <!-- Contractor Photo -->
+                                <div>
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1.5 text-center">Contractor's Proof</p>
+                                    <div class="h-32 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center" id="aiContractorPhoto">
+                                        <p class="text-xs text-slate-400">No photo</p>
+                                    </div>
+                                </div>
+                                <!-- Citizen Photos -->
+                                <div>
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1.5 text-center">Citizen Reports (Top 3)</p>
+                                    <div class="flex flex-col gap-1.5" id="aiCitizenPhotos">
+                                        <div class="h-32 bg-slate-100 rounded-lg flex items-center justify-center">
+                                            <p class="text-xs text-slate-400">No photos</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Admin comment -->
                 <div class="mb-6">
                     <label class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2">Admin
