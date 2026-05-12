@@ -60,6 +60,11 @@ Create a `.env` file in the root directory and add the following:
 PORT=3000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
+
+# AI (citizen portal — improve writing & easy summary). Groq is used first if set.
+GROQ_API_KEY=your_groq_api_key
+# Optional: GROQ_MODEL=llama-3.3-70b-versatile
+# Optional fallback: OPENAI_API_KEY=...
 ```
 
 ### 5. Run the Application

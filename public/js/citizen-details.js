@@ -12,11 +12,21 @@ let allReports = [];
 let allRequests = [];
 let selectedRating = 0;
 
+/** Full project fields for AI “Improve Writing” context (set in loadProject) */
+let projectSnapshot = null;
+
 // Camera state
 let cameraStream = null;
 let capturedBlob = null;
 let counterCameraStream = null;
 let counterCapturedBlob = null;
+
+/** Plain-text descriptions keyed by request id — used for “Easy Summary” AI input */
+let verificationTexts = {};
+const simplifyCache = new Map();
+const SIMPLIFY_CACHE_MAX = 48;
+let aiSimplifyLoading = false;
+let simplifyModalGen = 0;
 
 
 // ======================
@@ -31,6 +41,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([loadProject(), loadRequests(), loadReports()]);
     renderCommunityFeed();
     renderVerificationFeed();
+    setupImproveWritingUI();
+    setupVerificationSimplifyUI();
 });
 
 
@@ -41,6 +53,21 @@ async function loadProject() {
     try {
         const res = await fetch(`${API}/api/projects/${projectId}`);
         const p = await res.json();
+
+        projectSnapshot = {
+            projectId: p._id,
+            name: p.name,
+            location: p.location,
+            contractorName: p.contractorName,
+            budgetRaw: p.budget ?? null,
+            budgetDisplay: p.budget
+                ? `₹${!isNaN(Number(p.budget)) ? Number(p.budget).toLocaleString('en-IN') : p.budget}`
+                : null,
+            officialProgressPercent: p.progress,
+            projectStatus: p.status,
+            sitePhotoUrl: p.sitePhoto || null,
+            deadlineISO: p.deadline ? new Date(p.deadline).toISOString() : null,
+        };
 
         document.getElementById('projectName').textContent = p.name;
         document.getElementById('locationText').textContent = p.location;
@@ -70,6 +97,11 @@ async function loadProject() {
             const ratingsMap = await rRes.json();
             const r = ratingsMap[p._id];
             document.getElementById('contractorRating').textContent = r ? `${r.avg}/5 (${r.count} reviews)` : 'No ratings yet';
+            if (projectSnapshot) {
+                projectSnapshot.contractorRatingOnPortal = r
+                    ? { averageOutOf5: r.avg, reviewCount: r.count, label: `${r.avg}/5 (${r.count} reviews)` }
+                    : { label: 'No ratings yet', averageOutOf5: null, reviewCount: 0 };
+            }
         } catch { }
     } catch (err) {
         console.error('Error loading project:', err);
@@ -258,9 +290,14 @@ function renderVerificationFeed() {
         return;
     }
 
+    verificationTexts = {};
+
     container.innerHTML = allRequests.map(r => {
         const reqId = 'REQ-' + r._id.slice(-6).toUpperCase();
         const date = new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const descRaw = r.description || '';
+        const descTrim = descRaw.trim();
+        verificationTexts[r._id] = descTrim;
 
         const statusBg = r.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' : r.status === 'Rejected' ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700';
         const statusDot = r.status === 'Approved' ? 'bg-emerald-500' : r.status === 'Rejected' ? 'bg-red-500' : 'bg-orange-500';
@@ -304,7 +341,18 @@ function renderVerificationFeed() {
             <div class="accordion-body">
                 <div class="px-5 pb-5 pt-2 border-t border-slate-100">
                     ${photoHtml}
-                    <p class="text-sm text-slate-600 mb-2">${r.description || 'No description provided.'}</p>
+                    ${descTrim
+            ? `<div class="flex flex-col sm:flex-row sm:items-start gap-3 mb-2">
+                        <p class="text-sm text-slate-600 flex-1 min-w-0">${escapeHtml(descRaw)}</p>
+                        <button type="button" data-req-id="${r._id}"
+                            class="simplify-tech-btn inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-colors flex-shrink-0 whitespace-nowrap">
+                            <svg class="w-3.5 h-3.5 text-blue-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                            </svg>
+                            Easy Summary
+                        </button>
+                    </div>`
+            : `<p class="text-sm text-slate-600 mb-2">No description provided.</p>`}
                     ${mapLink}
                     ${r.adminComment ? `<p class="text-xs text-slate-500 mt-2">Admin: <em class="text-slate-700">${r.adminComment}</em></p>` : ''}
                     ${r.status === 'Pending' ? `
@@ -469,6 +517,247 @@ async function voteReport(reportId, voteType, btnEl) {
 
 
 // =============================================
+// AI UX — improve writing & verification summaries
+// =============================================
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function cacheSimplify(key, val) {
+    if (simplifyCache.size >= SIMPLIFY_CACHE_MAX) {
+        const firstKey = simplifyCache.keys().next().value;
+        simplifyCache.delete(firstKey);
+    }
+    simplifyCache.set(key, val);
+}
+
+/**
+ * Rich portal context for Improve Writing: project, selected contractor claim, all claims (full text),
+ * and recent citizen report excerpts so the model can align with real progress/claims.
+ */
+function buildImproveWritingContext() {
+    const selId = document.getElementById('modalRequestId')?.value?.trim() || '';
+    const selected = selId ? allRequests.find((r) => String(r._id) === selId) : null;
+
+    function reqPlain(r) {
+        if (!r) return null;
+        const id = r._id != null ? String(r._id) : '';
+        return {
+            requestRef: id ? `REQ-${id.slice(-6).toUpperCase()}` : '',
+            requestId: id,
+            contractorName: r.contractorName || projectSnapshot?.contractorName || null,
+            previousProgressPercent: r.previousProgress,
+            claimedProgressPercent: r.progressClaimed,
+            status: r.status,
+            description: (r.description || '').trim(),
+            adminComment: (r.adminComment || '').trim(),
+            photoUrl: r.photoUrl || null,
+            submittedAt: r.createdAt,
+            lastUpdated: r.updatedAt,
+        };
+    }
+
+    const project = projectSnapshot
+        ? { ...projectSnapshot }
+        : {
+            projectId,
+            name: document.getElementById('projectName')?.textContent?.trim() || '—',
+            location: document.getElementById('locationText')?.textContent?.trim() || '—',
+            contractorName: document.getElementById('contractorName')?.textContent?.trim() || '—',
+            note: 'Full project snapshot unavailable; values read from page where possible.',
+        };
+
+    const allClaims = [...allRequests]
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        .map(reqPlain)
+        .filter(Boolean);
+
+    const visibleReports = allReports.filter((r) => !r.flagged).slice(0, 30);
+    const groundReportsSample = visibleReports.map((r) => {
+        const repReq = r.requestId?._id || r.requestId;
+        const ref = repReq ? `REQ-${String(repReq).slice(-6).toUpperCase()}` : null;
+        let c = (r.comment || '').replace(/\n📍 GPS:[\s\S]*$/m, '').trim();
+        const maxEx = 900;
+        if (c.length > maxEx) c = `${c.slice(0, maxEx)}…`;
+        return {
+            date: r.createdAt,
+            linkedRequestRef: ref,
+            observationExcerpt: c,
+        };
+    });
+
+    return {
+        project,
+        selectedClaim: selected ? reqPlain(selected) : null,
+        selectedRequestRef: selected ? `REQ-${String(selected._id).slice(-6).toUpperCase()}` : null,
+        allClaims,
+        groundReportsSample,
+        portalNote:
+            'Data is from the live NIRMAAN portal. Use it to relate the citizen draft to the correct project, contractor, and progress claims. Do not contradict it. Citizen draft facts take precedence for what the reporter personally saw.',
+    };
+}
+
+function syncImproveWritingButton() {
+    const ta = document.getElementById('modalComment');
+    const btn = document.getElementById('btnImproveWriting');
+    if (!ta || !btn) return;
+    const busy = btn.dataset.busy === '1';
+    btn.disabled = busy || !ta.value.trim();
+}
+
+function setupImproveWritingUI() {
+    const ta = document.getElementById('modalComment');
+    const btn = document.getElementById('btnImproveWriting');
+    const hint = document.getElementById('improveWritingHint');
+    if (!ta || !btn) return;
+
+    ta.addEventListener('input', syncImproveWritingButton);
+
+    btn.addEventListener('click', async () => {
+        if (!window.NirmaanAI) {
+            showToast('AI helper not loaded. Refresh the page and try again.', 'error');
+            return;
+        }
+        const raw = ta.value.trim();
+        if (!raw || btn.dataset.busy === '1') return;
+
+        btn.dataset.busy = '1';
+        const prevHtml = btn.innerHTML;
+        btn.disabled = true;
+        ta.disabled = true;
+        btn.classList.add('inline-flex', 'items-center', 'gap-2');
+        btn.innerHTML = '<span class="ai-spinner flex-shrink-0" aria-hidden="true"></span><span>Improving…</span>';
+        if (hint) hint.classList.add('hidden');
+
+        try {
+            const ctx = buildImproveWritingContext();
+            const { result } = await window.NirmaanAI.improveWriting(raw, ctx);
+            ta.value = result;
+            if (hint) {
+                hint.classList.remove('hidden');
+                setTimeout(() => hint.classList.add('hidden'), 5000);
+            }
+            showToast('Report improved successfully.', 'success');
+        } catch (err) {
+            showToast(err.message || 'Unable to improve text right now.', 'error');
+        } finally {
+            btn.innerHTML = prevHtml;
+            ta.disabled = false;
+            delete btn.dataset.busy;
+            syncImproveWritingButton();
+        }
+    });
+}
+
+function setSimplifyButtonsDisabled(on) {
+    document.querySelectorAll('.simplify-tech-btn').forEach(b => {
+        b.disabled = on;
+    });
+}
+
+function closeSimplifyModal() {
+    simplifyModalGen += 1;
+    const modal = document.getElementById('simplifyModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+async function openSimplifyModal(sourceText) {
+    if (!window.NirmaanAI) {
+        showToast('AI helper not loaded. Refresh the page and try again.', 'error');
+        return;
+    }
+    const text = (sourceText || '').trim();
+    if (!text) return;
+
+    if (aiSimplifyLoading) {
+        showToast('Please wait for the current summary to finish.', 'info');
+        return;
+    }
+
+    simplifyModalGen += 1;
+    const gen = simplifyModalGen;
+
+    const modal = document.getElementById('simplifyModal');
+    const loading = document.getElementById('simplifyModalLoading');
+    const resultEl = document.getElementById('simplifyModalResult');
+    const origWrap = document.getElementById('simplifyModalOriginalWrap');
+    const origEl = document.getElementById('simplifyModalOriginal');
+
+    if (!modal || !loading || !resultEl || !origWrap || !origEl) return;
+
+    origEl.textContent = text;
+    origWrap.classList.remove('hidden');
+    resultEl.classList.add('hidden');
+    resultEl.textContent = '';
+    loading.classList.remove('hidden');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    const cached = simplifyCache.get(text);
+    if (cached) {
+        loading.classList.add('hidden');
+        resultEl.textContent = cached;
+        resultEl.classList.remove('hidden');
+        return;
+    }
+
+    aiSimplifyLoading = true;
+    setSimplifyButtonsDisabled(true);
+    try {
+        const { result } = await window.NirmaanAI.simplifyTechnical(text);
+        if (gen !== simplifyModalGen) return;
+        cacheSimplify(text, result);
+        loading.classList.add('hidden');
+        resultEl.textContent = result;
+        resultEl.classList.remove('hidden');
+    } catch (err) {
+        if (gen !== simplifyModalGen) return;
+        loading.classList.add('hidden');
+        resultEl.textContent = 'Unable to simplify content right now.';
+        resultEl.classList.remove('hidden');
+        showToast('Unable to simplify content right now.', 'error');
+    } finally {
+        aiSimplifyLoading = false;
+        setSimplifyButtonsDisabled(false);
+    }
+}
+
+function setupVerificationSimplifyUI() {
+    const list = document.getElementById('verificationList');
+    if (!list) return;
+
+    list.addEventListener('click', (e) => {
+        const btn = e.target.closest('.simplify-tech-btn');
+        if (!btn || btn.disabled) return;
+        const id = btn.getAttribute('data-req-id');
+        const t = verificationTexts[id];
+        if (t) openSimplifyModal(t);
+    });
+
+    const modal = document.getElementById('simplifyModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeSimplifyModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const modal = document.getElementById('simplifyModal');
+        if (modal && !modal.classList.contains('hidden')) closeSimplifyModal();
+    });
+}
+
+
+// =============================================
 // REPORT GROUND REALITY — CAMERA MODAL
 // =============================================
 async function openReportModal() {
@@ -507,6 +796,9 @@ async function openReportModal() {
     }
 
     detectGPS();
+    syncImproveWritingButton();
+    const hint = document.getElementById('improveWritingHint');
+    if (hint) hint.classList.add('hidden');
 }
 
 function closeReportModal() {
@@ -852,7 +1144,7 @@ function showToast(msg, type) {
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
-    const bg = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+    const bg = type === 'success' ? 'bg-emerald-600' : type === 'info' ? 'bg-slate-700' : 'bg-red-600';
     toast.className = `${bg} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium`;
     toast.style.animation = 'toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards';
     toast.textContent = msg;
